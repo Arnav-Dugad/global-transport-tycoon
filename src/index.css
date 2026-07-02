@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #0a0e17;
+  color: #eafcf7;
+  font-family: 'Inter', system-ui, sans-serif;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* { -webkit-user-select: none; user-select: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* MapLibre control theming to match the premium dark UI */
+.maplibregl-ctrl-group {
+  background: rgba(15, 20, 32, 0.85) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.maplibregl-ctrl-group button { filter: invert(1) hue-rotate(180deg); }
+.maplibregl-ctrl-attrib {
+  background: rgba(10, 14, 23, 0.6) !important;
+  border-radius: 8px 0 0 0;
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a { color: #9fb3c8 !important; }
+.maplibregl-ctrl-bottom-right { margin-bottom: calc(88px + var(--safe-bottom)); }
+
+/* Slim scrollbars inside panels */
+.gtt-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.gtt-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+@keyframes gtt-pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+.gtt-pulse { animation: gtt-pulse 1.6s ease-in-out infinite; }
