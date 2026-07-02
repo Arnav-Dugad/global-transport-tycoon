@@ -108,13 +108,13 @@ export default function BuildBar() {
 
         {/* Confirm row */}
         <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 text-[11px] text-white/60">
+          <div className="flex-1 text-[11px] tabular-nums text-white/60">
             {draftStops.length} stops · {formatNumber(totalKm)} km · <span className={cost > cash ? 'text-danger' : 'text-gold'}>{formatMoney(cost)}</span>
           </div>
           <button
             disabled={!canBuild}
             onClick={confirm}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-surface-950 shadow-glow transition active:scale-95 disabled:opacity-40 disabled:active:scale-100"
+            className="min-w-[104px] rounded-xl bg-accent px-4 py-2 text-sm font-bold text-surface-950 shadow-glow transition active:scale-95 disabled:opacity-40 disabled:active:scale-100"
           >
             {draftStops.length < 2 ? 'Add 2+ stops' : cost > cash ? 'Need cash' : 'Build ✓'}
           </button>

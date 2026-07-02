@@ -122,6 +122,7 @@ class GameEngine {
   takeLoan(amount: number): A.ActionResult { const r = A.takeLoan(this.state, amount); this.notify(); return r; }
   repayLoan(amount: number): A.ActionResult { const r = A.repayLoan(this.state, amount); this.notify(); return r; }
   research(techId: string): A.ActionResult { const r = A.research(this.state, techId); this.notify(); return r; }
+  setAutoReplace(v: boolean): void { this.state.autoReplace = v; this.notify(); }
 
   saveNow(slot: string): Promise<void> { return saveGame(slot, this.state); }
 }

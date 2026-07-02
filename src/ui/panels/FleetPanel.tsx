@@ -2,7 +2,7 @@ import { useUI } from '../../store/uiStore';
 import { engine, useGame } from '../../game/useEngine';
 import { MODEL_BY_ID } from '../../data/vehicles';
 import { formatMoney } from '../../utils/format';
-import { Button, Card, EmptyState } from '../atoms';
+import { Button, Card, EmptyState, Toggle } from '../atoms';
 import Sheet from '../Sheet';
 import type { Vehicle } from '../../game/types';
 
@@ -24,9 +24,18 @@ export default function FleetPanel() {
   const showToast = useUI((s) => s.showToast);
   const vehicles = useGame((s) => Object.values(s.vehicles));
   const routes = useGame((s) => s.routes);
+  const autoReplace = useGame((s) => s.autoReplace);
 
   return (
     <Sheet title="Fleet" emoji="🚚" onClose={closePanel}>
+      <div className="mb-3 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2">
+        <div>
+          <div className="text-sm font-semibold">Auto-replace worn vehicles</div>
+          <div className="text-[11px] text-white/45">Renews vehicles under 25% condition automatically.</div>
+        </div>
+        <Toggle on={autoReplace} onChange={(v) => engine.setAutoReplace(v)} />
+      </div>
+
       {vehicles.length === 0 ? (
         <EmptyState icon="🚐" title="No vehicles yet" hint="Open a route and add vehicles to start earning." />
       ) : (
@@ -41,22 +50,25 @@ export default function FleetPanel() {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{model.emoji}</span>
                   <div className="flex-1">
-                    <div className="text-sm font-semibold">{v.name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold">{v.name}</span>
+                      {autoReplace && <span className="rounded bg-accent/20 px-1 text-[8px] font-bold text-accent-soft">AUTO</span>}
+                    </div>
                     <div className="text-[11px] text-white/50">{route?.name ?? 'Unassigned'}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-xs font-bold" style={{ color: st.color }}>{st.text}</div>
-                    <div className="text-[11px] text-accent">{formatMoney(v.totalIncome)}</div>
+                    <div className="text-[11px] tabular-nums text-accent">{formatMoney(v.totalIncome)}</div>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full rounded-full" style={{ width: `${v.condition}%`, background: conditionColor(v.condition) }} />
                   </div>
-                  <span className="text-[10px] text-white/45">{Math.round(v.condition)}%</span>
+                  <span className="w-9 text-right text-[10px] tabular-nums text-white/45">{Math.round(v.condition)}%</span>
                   <Button
                     variant="ghost"
-                    className="px-2 py-1 text-[11px]"
+                    className="min-w-[68px] px-2 py-1 text-[11px] tabular-nums"
                     disabled={serviceCost <= 0}
                     onClick={() => { const r = engine.serviceVehicle(v.id); showToast(r.ok ? 'Serviced to 100%.' : r.error ?? ''); }}
                   >

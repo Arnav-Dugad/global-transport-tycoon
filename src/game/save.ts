@@ -68,6 +68,7 @@ function migrate(state: GameState): GameState {
   if (state.reputation == null) state.reputation = 50;
   if (state.contracts == null) state.contracts = [];
   if (state.companyName == null) state.companyName = 'Ancora Logistics';
+  if (state.autoReplace == null) state.autoReplace = false;
   state.version = SAVE_VERSION;
   return state;
 }

@@ -43,6 +43,7 @@ export const BALANCE = {
   wearPerLeg: 0.6, // condition points lost per completed leg
   conditionSpeedFloor: 0.55, // worst-case speed factor at 0 condition
   maintenanceReducedMult: 0.75, // with 'maintenance' tech
+  autoReplaceThreshold: 25, // condition at/below which auto-replace renews a vehicle
 
   // ---- Infrastructure ----
   stationCost: { road: 25_000, rail: 120_000, air: 400_000, sea: 350_000 } as Record<Mode, number>,

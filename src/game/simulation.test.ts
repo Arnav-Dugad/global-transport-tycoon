@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { newGame } from './world';
-import { advanceWorld } from './simulation';
+import { advanceWorld, autoReplaceVehicles } from './simulation';
 import { buildRoute, buyVehicle, takeLoan, repayLoan, research } from './actions';
 import { transact, netWorth } from './economy';
 import { creditContracts } from './contracts';
@@ -133,6 +133,56 @@ describe('contracts', () => {
     creditContracts(s, 'chi', 'oil', 100); // wrong cargo
     expect(contract.progress).toBe(0);
     expect(contract.status).toBe('active');
+  });
+});
+
+describe('auto-replace', () => {
+  function setupWorn() {
+    const s = newGame('easy', 3);
+    buildRoute(s, 'road', ['nyc', 'chi']);
+    buyVehicle(s, 'van', 'r1');
+    const v = Object.values(s.vehicles)[0];
+    v.condition = 10; // worn below threshold
+    v.age = 40;
+    return { s, v };
+  }
+
+  it('renews a worn vehicle when enabled and affordable', () => {
+    const { s, v } = setupWorn();
+    s.autoReplace = true;
+    const cash0 = s.cash;
+    autoReplaceVehicles(s);
+    expect(v.condition).toBe(100);
+    expect(v.age).toBe(0);
+    expect(s.cash).toBeLessThan(cash0); // charged the net cost
+  });
+
+  it('leaves the vehicle worn when disabled', () => {
+    const { s, v } = setupWorn();
+    s.autoReplace = false;
+    autoReplaceVehicles(s);
+    expect(v.condition).toBe(10);
+  });
+
+  it('leaves the vehicle worn when it cannot be afforded', () => {
+    const { s, v } = setupWorn();
+    s.autoReplace = true;
+    s.cash = 0;
+    autoReplaceVehicles(s);
+    expect(v.condition).toBe(10);
+  });
+
+  it('keeps save determinism with auto-replace enabled', () => {
+    const build = (seed: number) => {
+      const s = newGame('normal', seed);
+      s.autoReplace = true;
+      buildRoute(s, 'road', ['lon', 'par']);
+      buyVehicle(s, 'van', 'r1');
+      const iters = Math.round((60 * 24 * 40) / BALANCE.simStepMinutes);
+      for (let i = 0; i < iters; i++) advanceWorld(s, BALANCE.simStepMinutes);
+      return s;
+    };
+    expect(JSON.stringify(build(555))).toBe(JSON.stringify(build(555)));
   });
 });
 

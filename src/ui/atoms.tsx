@@ -28,7 +28,7 @@ export function Button({
 export function Chip({ children, color }: { children: ReactNode; color?: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full bg-white/8 px-2 py-0.5 text-[11px] font-medium text-white/80"
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white/8 px-2 py-0.5 text-[11px] font-medium tabular-nums text-white/80"
       style={color ? { color, background: `${color}22` } : undefined}
     >
       {children}
@@ -36,12 +36,28 @@ export function Chip({ children, color }: { children: ReactNode; color?: string 
   );
 }
 
+export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label?: string }) {
+  return (
+    <button
+      onClick={() => onChange(!on)}
+      className="flex items-center gap-2"
+      role="switch"
+      aria-checked={on}
+    >
+      {label && <span className="text-sm text-white/80">{label}</span>}
+      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${on ? 'bg-accent' : 'bg-white/15'}`}>
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
+      </span>
+    </button>
+  );
+}
+
 export function Stat({ label, value, sub, accent }: { label: string; value: ReactNode; sub?: ReactNode; accent?: string }) {
   return (
-    <div className="rounded-xl bg-white/5 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-white/45">{label}</div>
-      <div className="text-lg font-bold leading-tight" style={accent ? { color: accent } : undefined}>{value}</div>
-      {sub != null && <div className="text-[11px] text-white/50">{sub}</div>}
+    <div className="flex min-h-[62px] min-w-0 flex-col justify-center rounded-xl bg-white/5 px-3 py-2">
+      <div className="truncate text-[10px] uppercase tracking-wide text-white/45">{label}</div>
+      <div className="truncate text-lg font-bold leading-tight tabular-nums" style={accent ? { color: accent } : undefined}>{value}</div>
+      {sub != null && <div className="truncate text-[11px] text-white/50">{sub}</div>}
     </div>
   );
 }

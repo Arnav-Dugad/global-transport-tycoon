@@ -5,7 +5,7 @@ import { listSaves, loadGame, deleteSave, type SaveMeta } from '../../game/save'
 import { ACHIEVEMENTS } from '../../game/achievements';
 import { netWorth } from '../../game/economy';
 import { companyTitle, formatMoney } from '../../utils/format';
-import { Button, Card, SectionTitle } from '../atoms';
+import { Button, Card, SectionTitle, Toggle } from '../atoms';
 import Sheet from '../Sheet';
 
 export default function MenuPanel() {
@@ -18,6 +18,7 @@ export default function MenuPanel() {
   const unlocked = useGame((s) => s.achievements.map((a) => a.id));
   const company = useGame((s) => s.companyName);
   const nw = useGame((s) => netWorth(s));
+  const autoReplace = useGame((s) => s.autoReplace);
   const title = companyTitle(nw);
 
   const [saves, setSaves] = useState<SaveMeta[]>([]);
@@ -46,8 +47,12 @@ export default function MenuPanel() {
         <Button variant={settings.graphics === 'high' ? 'primary' : 'ghost'} className="flex-1 text-xs" onClick={() => { setGraphics('high'); showToast('Reload to apply 3D buildings.'); }}>High (3D)</Button>
         <Button variant={settings.graphics === 'low' ? 'primary' : 'ghost'} className="flex-1 text-xs" onClick={() => { setGraphics('low'); showToast('Reload to apply.'); }}>Low (fast)</Button>
       </div>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-3 flex gap-2">
         <Button variant="ghost" className="flex-1 text-xs" onClick={toggleSound}>Sound: {settings.sound ? 'On' : 'Off'}</Button>
+      </div>
+      <div className="mb-4 flex items-center justify-between rounded-xl bg-white/5 px-3 py-2">
+        <span className="text-sm">♻️ Auto-replace worn vehicles</span>
+        <Toggle on={autoReplace} onChange={(v) => engine.setAutoReplace(v)} />
       </div>
 
       <SectionTitle>Save & load</SectionTitle>

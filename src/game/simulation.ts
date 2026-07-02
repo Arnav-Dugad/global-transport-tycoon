@@ -7,7 +7,7 @@ import { CITY_BY_ID } from '../data/cities';
 import { MODEL_BY_ID } from '../data/vehicles';
 import { BALANCE } from './balance';
 import { transact } from './economy';
-import { rollDailyEvents, maybeBreakdownOnArrival } from './events';
+import { rollDailyEvents, maybeBreakdownOnArrival, pushEvent } from './events';
 import { checkAchievements } from './achievements';
 import { updateContracts, creditContracts } from './contracts';
 import { greatCirclePoint, haversineKm, bearingDeg, type LngLat } from '../utils/geo';
@@ -249,6 +249,9 @@ function processDay(state: GameState): void {
   }
   if (maint > 0) transact(state, 'maintenance', -maint);
 
+  // Auto-replace worn vehicles (deterministic; opt-in global toggle)
+  autoReplaceVehicles(state);
+
   // Passive research
   state.researchPoints += BALANCE.researchPointsPerDay;
 
@@ -284,6 +287,33 @@ function processDay(state: GameState): void {
   state.ledgerToday = { freight: 0, maintenance: 0, fuel: 0, interest: 0, purchases: 0, other: 0 };
 
   checkAchievements(state);
+}
+
+/** Renew worn vehicles to like-new when the global auto-replace toggle is on. */
+export function autoReplaceVehicles(state: GameState): void {
+  if (!state.autoReplace) return;
+  let count = 0;
+  let spent = 0;
+  for (const v of Object.values(state.vehicles)) {
+    if (v.condition > BALANCE.autoReplaceThreshold) continue;
+    const model = MODEL_BY_ID[v.modelId];
+    if (!model) continue;
+    const resale = model.price * BALANCE.vehicleResaleFactor * (v.condition / 100);
+    const netCost = model.price - resale;
+    if (state.cash < netCost) continue; // can't afford — leave it worn
+    transact(state, 'purchases', -netCost);
+    v.condition = 100;
+    v.age = 0;
+    count += 1;
+    spent += netCost;
+  }
+  if (count > 0) {
+    pushEvent(state, {
+      kind: 'info',
+      title: 'Fleet auto-renewed',
+      message: `♻️ Renewed ${count} worn vehicle${count === 1 ? '' : 's'} for ${Math.round(spent).toLocaleString('en-US')}.`,
+    });
+  }
 }
 
 function estimateAssets(state: GameState): number {

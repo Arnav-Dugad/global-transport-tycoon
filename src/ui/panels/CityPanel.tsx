@@ -56,7 +56,7 @@ export default function CityPanel() {
             {topStock.map(([c, n]) => (
               <div key={c} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-1.5 text-sm">
                 <span>{CARGO_BY_ID[c]?.emoji} {CARGO_BY_ID[c]?.name}</span>
-                <span className="font-semibold text-white/70">{formatNumber(n)}</span>
+                <span className="font-semibold tabular-nums text-white/70">{formatNumber(n)}</span>
               </div>
             ))}
           </div>

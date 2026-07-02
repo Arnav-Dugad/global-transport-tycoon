@@ -49,8 +49,8 @@ export default function ContractsPanel() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="text-[10px] text-white/50">{c.progress}/{c.amount}</span>
-                  <span className={`text-[10px] font-semibold ${urgent ? 'text-danger' : 'text-white/50'}`}>{daysLeft.toFixed(0)}d left</span>
+                  <span className="text-[10px] tabular-nums text-white/50">{c.progress}/{c.amount}</span>
+                  <span className={`text-[10px] font-semibold tabular-nums ${urgent ? 'text-danger' : 'text-white/50'}`}>{daysLeft.toFixed(0)}d left</span>
                 </div>
               </Card>
             );

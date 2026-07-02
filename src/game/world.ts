@@ -71,6 +71,7 @@ export function newGame(difficulty: Difficulty, seed?: number, companyName?: str
     researchPoints: 0,
     unlockedTech: [],
     unlockedModes: ['road'],
+    autoReplace: false,
 
     cities,
     stations: {},

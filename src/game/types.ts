@@ -121,6 +121,7 @@ export interface GameState {
   researchPoints: number;
   unlockedTech: string[];
   unlockedModes: Mode[];
+  autoReplace: boolean;
 
   cities: Record<string, CityState>;
   stations: Record<string, Station>;

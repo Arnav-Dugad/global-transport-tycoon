@@ -25,15 +25,15 @@ export default function TopBar() {
       style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
     >
       {/* Money */}
-      <div className="pointer-events-auto flex flex-col gap-1 rounded-2xl border border-white/10 bg-surface-900/80 px-3 py-2 shadow-glass backdrop-blur">
-        <div className={`text-lg font-extrabold leading-none ${cash < 0 ? 'text-danger' : 'text-accent'}`}>
+      <div className="pointer-events-auto flex min-w-[116px] flex-col gap-1 rounded-2xl border border-white/10 bg-surface-900/80 px-3 py-2 shadow-glass backdrop-blur">
+        <div className={`text-lg font-extrabold leading-none tabular-nums ${cash < 0 ? 'text-danger' : 'text-accent'}`}>
           {formatMoney(cash)}
         </div>
-        <div className="text-[10px] font-medium text-white/50">{companyTitle(nw).emoji} {formatMoney(nw)}</div>
+        <div className="text-[10px] font-medium tabular-nums text-white/50">{companyTitle(nw).emoji} {formatMoney(nw)}</div>
       </div>
 
       {/* Date + speed */}
-      <div className="pointer-events-auto flex flex-col items-center gap-1 rounded-2xl border border-white/10 bg-surface-900/80 px-3 py-1.5 shadow-glass backdrop-blur">
+      <div className="pointer-events-auto flex min-w-[148px] flex-col items-center gap-1 rounded-2xl border border-white/10 bg-surface-900/80 px-3 py-1.5 shadow-glass backdrop-blur">
         <div className="flex items-baseline gap-2">
           <span className="text-xs font-semibold text-white/85">{formatDate(time)}</span>
           <span className="text-[11px] tabular-nums text-white/45">{formatClock(time)}</span>
@@ -60,7 +60,7 @@ export default function TopBar() {
           className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-surface-900/80 px-3 py-2 shadow-glass backdrop-blur"
         >
           <span className="text-sm">🔬</span>
-          <span className="text-sm font-bold text-accent-soft">{rp}</span>
+          <span className="min-w-[24px] text-right text-sm font-bold tabular-nums text-accent-soft">{rp}</span>
         </button>
         <button
           onClick={() => openPanel('menu')}

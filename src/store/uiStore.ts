@@ -78,11 +78,11 @@ export const useUI = create<UIState>((set, getState) => ({
   toast: null,
   settings: loadSettings(),
 
-  openPanel: (p) => set({ panel: p }),
+  openPanel: (p) => set({ panel: p, selectedVehicle: null }),
   closePanel: () => set({ panel: null }),
-  selectCity: (id) => set({ selectedCity: id, panel: id ? 'city' : null }),
+  selectCity: (id) => set({ selectedCity: id, panel: id ? 'city' : null, selectedVehicle: null }),
   selectRoute: (id) => set({ selectedRoute: id }),
-  selectVehicle: (id) => set({ selectedVehicle: id }),
+  selectVehicle: (id) => set(id ? { selectedVehicle: id, panel: null } : { selectedVehicle: null }),
 
   startBuild: (mode) => set({ buildMode: mode, draftStops: [], panel: 'build', selectedCity: null }),
   cancelBuild: () => set({ buildMode: null, draftStops: [] }),

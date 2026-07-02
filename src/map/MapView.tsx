@@ -22,6 +22,38 @@ type FC = GeoJSON.FeatureCollection;
 
 const EMPTY: FC = { type: 'FeatureCollection', features: [] };
 
+// Animated "flowing cargo" dash pattern for route lines (classic ant-path).
+const DASH_SEQUENCE: number[][] = [
+  [0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5],
+  [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2],
+  [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5],
+];
+
+/** A small "reset to world view" (globe) button in the map control group. */
+class ResetViewControl implements maplibregl.IControl {
+  private container?: HTMLDivElement;
+  onAdd(map: maplibregl.Map): HTMLElement {
+    const c = document.createElement('div');
+    c.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.title = 'Reset to world view';
+    b.setAttribute('aria-label', 'Reset to world view');
+    b.textContent = '🌍';
+    b.style.cssText = 'width:29px;height:29px;font-size:16px;line-height:29px;filter:none;';
+    b.onclick = () => map.flyTo({
+      center: INITIAL_VIEW.center, zoom: INITIAL_VIEW.zoom,
+      pitch: INITIAL_VIEW.pitch, bearing: 0, duration: 1400, essential: true,
+    });
+    c.appendChild(b);
+    this.container = c;
+    return c;
+  }
+  onRemove(): void {
+    this.container?.parentNode?.removeChild(this.container);
+  }
+}
+
 function citiesGeoJSON(): FC {
   return {
     type: 'FeatureCollection',
@@ -142,6 +174,7 @@ export default function MapView() {
     mapRef.current = map;
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+    map.addControl(new ResetViewControl(), 'bottom-right');
 
     map.on('load', () => {
       readyRef.current = true;
@@ -181,6 +214,7 @@ export default function MapView() {
       map.addSource('gtt-vehicles', { type: 'geojson', data: vehiclesGeoJSON() });
       map.addSource('gtt-draft-line', { type: 'geojson', data: EMPTY });
       map.addSource('gtt-draft-points', { type: 'geojson', data: EMPTY });
+      map.addSource('gtt-city-selected', { type: 'geojson', data: EMPTY });
 
       // ---- Route lines ----
       addLayer({
@@ -193,6 +227,14 @@ export default function MapView() {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['get', 'color'], 'line-width': 2.2, 'line-opacity': 0.9 },
       });
+      // Flowing dashes overlay (animated in the rAF loop) — high graphics only.
+      if (quality === 'high') {
+        addLayer({
+          id: 'gtt-routes-flow', type: 'line', source: 'gtt-routes',
+          layout: { 'line-cap': 'butt', 'line-join': 'round' },
+          paint: { 'line-color': '#ffffff', 'line-width': 1.6, 'line-opacity': 0.55, 'line-dasharray': [0, 4, 3] },
+        });
+      }
 
       // ---- Draft (route builder preview) ----
       addLayer({
@@ -207,6 +249,15 @@ export default function MapView() {
         paint: {
           'circle-radius': 9, 'circle-color': 'rgba(0,0,0,0)',
           'circle-stroke-color': '#38e8c6', 'circle-stroke-width': 2, 'circle-stroke-opacity': 0.7,
+        },
+      });
+
+      // ---- Selected city highlight ring (pulsed in the rAF loop) ----
+      addLayer({
+        id: 'gtt-city-ring', type: 'circle', source: 'gtt-city-selected',
+        paint: {
+          'circle-radius': 14, 'circle-color': 'rgba(0,0,0,0)',
+          'circle-stroke-color': '#38e8c6', 'circle-stroke-width': 3, 'circle-stroke-opacity': 0.9,
         },
       });
 
@@ -311,17 +362,35 @@ export default function MapView() {
     return () => { map.remove(); mapRef.current = null; readyRef.current = false; };
   }, []);
 
-  // Per-frame vehicle animation (independent of React renders).
+  // Per-frame animation (independent of React renders): vehicles, route flow,
+  // day/night tint and the selected-city pulse ring.
   useEffect(() => {
     let raf = 0;
-    const tick = () => {
+    let dashStep = 0;
+    let lastDash = 0;
+    const tick = (ts: number) => {
       const map = mapRef.current;
       if (map && readyRef.current) {
         const src = map.getSource('gtt-vehicles') as GeoJSONSource | undefined;
         if (src) src.setData(vehiclesGeoJSON());
+
         // Day/night: dim the 3D buildings at night for a subtle time-of-day feel.
         const d = daylight(engine.state.time);
         try { map.setPaintProperty('gtt-3d-buildings', 'fill-extrusion-opacity', 0.5 + d * 0.4); } catch { /* layer may not exist */ }
+
+        // Flowing route dashes (advance ~18fps).
+        if (ts - lastDash > 55) {
+          lastDash = ts;
+          dashStep = (dashStep + 1) % DASH_SEQUENCE.length;
+          try { map.setPaintProperty('gtt-routes-flow', 'line-dasharray', DASH_SEQUENCE[dashStep]); } catch { /* flow layer optional */ }
+        }
+
+        // Selected-city pulse.
+        const pulse = (Math.sin(ts / 320) + 1) / 2;
+        try {
+          map.setPaintProperty('gtt-city-ring', 'circle-radius', 12 + pulse * 10);
+          map.setPaintProperty('gtt-city-ring', 'circle-stroke-opacity', 0.15 + (1 - pulse) * 0.75);
+        } catch { /* ring optional */ }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -356,13 +425,20 @@ export default function MapView() {
     (map.getSource('gtt-draft-line') as GeoJSONSource | undefined)?.setData(line);
   }, [draftStops]);
 
-  // Fly to a selected city.
+  // Fly to a selected city + drive the highlight ring.
   const selectedCity = useUI((s) => s.selectedCity);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current || !selectedCity) return;
+    if (!map || !readyRef.current) return;
+    const ring = map.getSource('gtt-city-selected') as GeoJSONSource | undefined;
+    if (!selectedCity) { ring?.setData(EMPTY); return; }
     const c = CITY_BY_ID[selectedCity];
-    if (c) map.flyTo({ center: [c.lng, c.lat], zoom: Math.max(map.getZoom(), 5), duration: 1200, essential: true });
+    if (!c) return;
+    ring?.setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [c.lng, c.lat] }, properties: {} }],
+    });
+    map.flyTo({ center: [c.lng, c.lat], zoom: Math.max(map.getZoom(), 5), duration: 1200, essential: true });
   }, [selectedCity]);
 
   return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
