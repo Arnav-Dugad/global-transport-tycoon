@@ -47,7 +47,7 @@ function makeCity(id: string, population: number): CityState {
   };
 }
 
-export function newGame(difficulty: Difficulty, seed?: number): GameState {
+export function newGame(difficulty: Difficulty, seed?: number, companyName?: string): GameState {
   const s = seed ?? (Math.floor(Math.random() * 0xffffffff) >>> 0);
   const cfg = BALANCE.difficulty[difficulty];
 
@@ -59,6 +59,7 @@ export function newGame(difficulty: Difficulty, seed?: number): GameState {
     seed: s,
     rng: createRng(s),
     difficulty,
+    companyName: companyName?.trim() || 'Ancora Logistics',
 
     time: 8 * 60, // start at 08:00 day 1
     lastProcessedDay: 0,
@@ -84,6 +85,7 @@ export function newGame(difficulty: Difficulty, seed?: number): GameState {
 
     stats: { totalDelivered: 0, totalTrips: 0, totalIncome: 0, totalSpent: 0 },
     achievements: [],
+    contracts: [],
     events: [],
 
     nextId: 1,

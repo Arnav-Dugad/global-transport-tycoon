@@ -1,6 +1,6 @@
 import { engine, useGame } from '../../game/useEngine';
 import { netWorth } from '../../game/economy';
-import { formatDate, formatClock, formatMoney } from '../../utils/format';
+import { formatDate, formatClock, formatMoney, companyTitle } from '../../utils/format';
 import { useUI } from '../../store/uiStore';
 import type { SpeedKey } from '../../game/engine';
 
@@ -29,7 +29,7 @@ export default function TopBar() {
         <div className={`text-lg font-extrabold leading-none ${cash < 0 ? 'text-danger' : 'text-accent'}`}>
           {formatMoney(cash)}
         </div>
-        <div className="text-[10px] font-medium text-white/50">Net worth {formatMoney(nw)}</div>
+        <div className="text-[10px] font-medium text-white/50">{companyTitle(nw).emoji} {formatMoney(nw)}</div>
       </div>
 
       {/* Date + speed */}

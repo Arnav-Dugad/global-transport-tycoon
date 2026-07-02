@@ -3,7 +3,8 @@ import { useUI } from '../../store/uiStore';
 import { engine, useGame } from '../../game/useEngine';
 import { listSaves, loadGame, deleteSave, type SaveMeta } from '../../game/save';
 import { ACHIEVEMENTS } from '../../game/achievements';
-import { formatMoney } from '../../utils/format';
+import { netWorth } from '../../game/economy';
+import { companyTitle, formatMoney } from '../../utils/format';
 import { Button, Card, SectionTitle } from '../atoms';
 import Sheet from '../Sheet';
 
@@ -15,6 +16,9 @@ export default function MenuPanel() {
   const setGraphics = useUI((s) => s.setGraphics);
   const toggleSound = useUI((s) => s.toggleSound);
   const unlocked = useGame((s) => s.achievements.map((a) => a.id));
+  const company = useGame((s) => s.companyName);
+  const nw = useGame((s) => netWorth(s));
+  const title = companyTitle(nw);
 
   const [saves, setSaves] = useState<SaveMeta[]>([]);
   const refresh = () => { void listSaves().then(setSaves); };
@@ -32,6 +36,11 @@ export default function MenuPanel() {
 
   return (
     <Sheet title="Menu" emoji="☰" onClose={closePanel}>
+      <div className="mb-4 rounded-2xl border border-white/10 bg-gradient-to-r from-accent/10 to-transparent p-3">
+        <div className="text-lg font-bold">{company}</div>
+        <div className="text-xs text-white/60">{title.emoji} {title.name} · {formatMoney(nw)} net worth</div>
+      </div>
+
       <SectionTitle>Graphics</SectionTitle>
       <div className="mb-3 flex gap-2">
         <Button variant={settings.graphics === 'high' ? 'primary' : 'ghost'} className="flex-1 text-xs" onClick={() => { setGraphics('high'); showToast('Reload to apply 3D buildings.'); }}>High (3D)</Button>
@@ -70,10 +79,11 @@ export default function MenuPanel() {
         })}
       </div>
 
-      <Button variant="danger" className="w-full" onClick={() => { engine.setSpeed('pause'); setPhase('start'); closePanel(); }}>
+      <Button variant="danger" className="w-full" onClick={() => { engine.setSpeed('pause'); engine.active = false; setPhase('start'); closePanel(); }}>
         Quit to main menu
       </Button>
       <div className="mt-3 text-center text-[10px] text-white/30">Global Transport Tycoon · Free & open · Map data © OpenStreetMap contributors</div>
+      <div className="mt-1 text-center text-[10px] font-semibold text-white/35">Arnav © {new Date().getFullYear()}</div>
     </Sheet>
   );
 }

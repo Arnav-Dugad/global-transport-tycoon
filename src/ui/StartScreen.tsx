@@ -13,17 +13,20 @@ const DIFFS: { id: Difficulty; name: string; blurb: string }[] = [
   { id: 'hard', name: 'Tycoon', blurb: 'Tight money, costly debt, frequent events.' },
 ];
 
+const NAME_IDEAS = ['Ancora Logistics', 'Meridian Freight', 'Vanguard Cargo', 'Aurora Transit', 'Zenith Lines', 'Continental Haul'];
+
 export default function StartScreen() {
   const setPhase = useUI((s) => s.setPhase);
   const setShowTutorial = useUI((s) => s.setShowTutorial);
   const [diff, setDiff] = useState<Difficulty>('normal');
+  const [name, setName] = useState(() => NAME_IDEAS[Math.floor(Math.random() * NAME_IDEAS.length)]);
   const [saves, setSaves] = useState<SaveMeta[]>([]);
 
   useEffect(() => { void listSaves().then(setSaves); }, []);
   const auto = saves.find((s) => s.slot === AUTOSAVE_SLOT) ?? saves[0];
 
   const newGame = () => {
-    engine.startGame(diff);
+    engine.startGame(diff, undefined, name);
     setPhase('playing');
     setShowTutorial(true);
   };
@@ -46,6 +49,13 @@ export default function StartScreen() {
       </motion.div>
 
       <div className="mt-8 w-full max-w-sm">
+        <div className="mb-2 text-left text-xs font-semibold uppercase tracking-wider text-white/40">Company name</div>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value.slice(0, 28))}
+          placeholder="Your company"
+          className="mb-4 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white outline-none focus:border-accent/60"
+        />
         <div className="mb-2 text-left text-xs font-semibold uppercase tracking-wider text-white/40">Choose difficulty</div>
         <div className="space-y-2">
           {DIFFS.map((d) => {
@@ -78,6 +88,7 @@ export default function StartScreen() {
       <div className="mt-8 max-w-sm text-[11px] text-white/30">
         100% free, no ads, no account. Map data © OpenStreetMap contributors · Tiles by OpenFreeMap.
       </div>
+      <div className="mt-2 text-[11px] font-semibold text-white/40">Arnav © {new Date().getFullYear()}</div>
     </div>
   );
 }

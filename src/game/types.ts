@@ -83,6 +83,20 @@ export interface Achievement {
   unlockedAt: number;
 }
 
+export interface Contract {
+  id: string;
+  fromCity: string;
+  toCity: string;
+  cargo: string;
+  amount: number;
+  reward: number;
+  rp: number;
+  deadline: number; // game-minute timestamp
+  createdAt: number;
+  progress: number;
+  status: 'active' | 'done' | 'failed';
+}
+
 export interface GameStats {
   totalDelivered: number; // cargo units
   totalTrips: number;
@@ -95,6 +109,7 @@ export interface GameState {
   seed: number;
   rng: RngState;
   difficulty: Difficulty;
+  companyName: string;
 
   time: number; // game minutes since start
   lastProcessedDay: number; // for daily rollovers
@@ -120,6 +135,7 @@ export interface GameState {
 
   stats: GameStats;
   achievements: Achievement[];
+  contracts: Contract[];
   events: GameEvent[]; // recent, capped
 
   nextId: number; // monotonic id counter (deterministic)

@@ -6,18 +6,19 @@ const NAV: { id: PanelId; icon: string; label: string }[] = [
   { id: 'routes', icon: '🧭', label: 'Routes' },
   { id: 'fleet', icon: '🚚', label: 'Fleet' },
   { id: 'finance', icon: '📊', label: 'Finance' },
-  { id: 'research', icon: '🔬', label: 'Research' },
+  { id: 'contracts', icon: '📋', label: 'Contracts' },
 ];
 
 export default function BottomNav() {
   const panel = useUI((s) => s.panel);
   const openPanel = useUI((s) => s.openPanel);
   const closePanel = useUI((s) => s.closePanel);
-  const cancelBuild = useUI((s) => s.cancelBuild);
+  const startBuild = useUI((s) => s.startBuild);
 
   const vehicles = useGame((s) => Object.keys(s.vehicles).length);
   const routes = useGame((s) => Object.keys(s.routes).length);
-  const badges: Partial<Record<string, number>> = { fleet: vehicles, routes };
+  const contracts = useGame((s) => s.contracts.filter((c) => c.status === 'active').length);
+  const badges: Partial<Record<string, number>> = { fleet: vehicles, routes, contracts };
 
   return (
     <div
@@ -32,7 +33,8 @@ export default function BottomNav() {
             <button
               key={n.id}
               onClick={() => {
-                if (active) { closePanel(); if (n.id === 'build') cancelBuild(); }
+                if (n.id === 'build') { startBuild('road'); return; }
+                if (active) closePanel();
                 else openPanel(n.id);
               }}
               className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 transition ${

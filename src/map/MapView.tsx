@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import maplibregl, { type GeoJSONSource, type MapLayerMouseEvent } from 'maplibre-gl';
+import maplibregl, { type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { CITIES, CITY_BY_ID } from '../data/cities';
 import { MODEL_BY_ID } from '../data/vehicles';
+import { registerVehicleSprites, spriteKey } from './vehicleSprites';
 import { engine } from '../game/engine';
 import { useGameTick } from '../game/useEngine';
 import { vehicleLngLat } from '../game/simulation';
@@ -111,7 +112,7 @@ function vehiclesGeoJSON(): FC {
       geometry: { type: 'Point', coordinates: pos },
       properties: {
         id: v.id,
-        emoji: model.emoji,
+        sprite: spriteKey(model.mode, model.carries),
         bearing,
         broken: v.status === 'broken' ? 1 : 0,
       },
@@ -148,6 +149,9 @@ export default function MapView() {
       // MapLibre's style-expression types are extremely strict; our expressions are
       // valid at runtime, so we add layers through a thin any-typed helper.
       const addLayer = (spec: unknown) => map.addLayer(spec as maplibregl.LayerSpecification);
+
+      // Register canvas-drawn 2D vehicle sprites.
+      registerVehicleSprites(map);
 
       // ---- 3D buildings ----
       if (quality === 'high') {
@@ -222,6 +226,11 @@ export default function MapView() {
           'circle-stroke-color': '#0a0e17', 'circle-stroke-width': 1.5,
         },
       });
+      // Invisible, enlarged hit target so cities are easy to tap on mobile.
+      addLayer({
+        id: 'gtt-cities-hit', type: 'circle', source: 'gtt-cities',
+        paint: { 'circle-radius': 16, 'circle-color': '#000000', 'circle-opacity': 0 },
+      });
       addLayer({
         id: 'gtt-draft-points', type: 'circle', source: 'gtt-draft-points',
         paint: {
@@ -242,37 +251,60 @@ export default function MapView() {
         paint: { 'text-color': '#dfeaf5', 'text-halo-color': '#0a0e17', 'text-halo-width': 1.4 },
       });
 
-      // ---- Vehicles ----
+      // ---- Vehicles (2D top-down sprites, rotated to travel bearing) ----
       addLayer({
         id: 'gtt-vehicles', type: 'symbol', source: 'gtt-vehicles',
         layout: {
-          'text-field': ['get', 'emoji'],
-          'text-size': 20,
-          'text-allow-overlap': true,
-          'text-ignore-placement': true,
-          'text-rotation-alignment': 'map',
+          'icon-image': ['get', 'sprite'],
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 2, 0.55, 6, 0.9, 12, 1.2],
+          'icon-rotate': ['get', 'bearing'],
+          'icon-rotation-alignment': 'map',
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
-        paint: { 'text-opacity': ['case', ['==', ['get', 'broken'], 1], 0.5, 1] },
+        paint: { 'icon-opacity': ['case', ['==', ['get', 'broken'], 1], 0.45, 1] },
       });
 
       // ---- Interactions ----
-      const onCityClick = (e: MapLayerMouseEvent) => {
-        const f = e.features?.[0];
-        if (!f) return;
-        const id = f.properties?.id as string;
+      // A single, forgiving tap handler: query a padded box and pick the nearest
+      // city so small targets at world zoom are still easy to hit on mobile.
+      const PAD = 22;
+      map.on('click', (e) => {
         const ui = useUI.getState();
-        if (ui.buildMode) ui.toggleDraftStop(id);
-        else ui.selectCity(id);
-      };
-      map.on('click', 'gtt-cities', onCityClick);
-      map.on('click', 'gtt-cities-glow', onCityClick);
-      for (const layer of ['gtt-cities', 'gtt-cities-glow']) {
-        map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
-        map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
-      }
-      map.on('click', 'gtt-vehicles', (e) => {
-        const id = e.features?.[0]?.properties?.id as string;
-        if (id) useUI.getState().selectVehicle(id);
+
+        // Vehicles take priority when tapped directly.
+        const vehHits = map.queryRenderedFeatures(e.point, { layers: ['gtt-vehicles'] });
+        if (vehHits.length && !ui.buildMode) {
+          const id = vehHits[0].properties?.id as string;
+          if (id) { ui.selectVehicle(id); return; }
+        }
+
+        const box: [maplibregl.PointLike, maplibregl.PointLike] = [
+          [e.point.x - PAD, e.point.y - PAD],
+          [e.point.x + PAD, e.point.y + PAD],
+        ];
+        const hits = map.queryRenderedFeatures(box, { layers: ['gtt-cities-hit'] });
+        if (!hits.length) return;
+
+        // Nearest city centroid to the tap point.
+        let best: string | null = null;
+        let bestD = Infinity;
+        for (const f of hits) {
+          const id = f.properties?.id as string;
+          const c = CITY_BY_ID[id];
+          if (!c) continue;
+          const p = map.project([c.lng, c.lat]);
+          const d = (p.x - e.point.x) ** 2 + (p.y - e.point.y) ** 2;
+          if (d < bestD) { bestD = d; best = id; }
+        }
+        if (!best) return;
+        if (ui.buildMode) ui.toggleDraftStop(best);
+        else ui.selectCity(best);
+      });
+
+      map.on('mousemove', (e) => {
+        const hits = map.queryRenderedFeatures(e.point, { layers: ['gtt-cities-hit', 'gtt-vehicles'] });
+        map.getCanvas().style.cursor = hits.length ? 'pointer' : '';
       });
     });
 

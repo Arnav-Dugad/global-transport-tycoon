@@ -28,6 +28,7 @@ class GameEngine {
   private lastNotify = 0;
   private lastAutosave = 0;
   started = false;
+  active = false; // true once a game is actually started/loaded (gates autosave)
 
   // ---- external store contract ----
   subscribe = (cb: () => void): (() => void) => {
@@ -41,10 +42,11 @@ class GameEngine {
   }
 
   // ---- lifecycle ----
-  startGame(difficulty: Difficulty, seed?: number): void {
-    this.state = newGame(difficulty, seed);
+  startGame(difficulty: Difficulty, seed?: number, companyName?: string): void {
+    this.state = newGame(difficulty, seed, companyName);
     this.speed = 'x1';
     this.acc = 0;
+    this.active = true;
     this.notify();
   }
 
@@ -52,6 +54,7 @@ class GameEngine {
     this.state = state;
     this.speed = 'pause';
     this.acc = 0;
+    this.active = true;
     this.notify();
   }
 
@@ -97,7 +100,7 @@ class GameEngine {
       this.notify();
     }
 
-    if (ts - this.lastAutosave >= AUTOSAVE_INTERVAL_MS) {
+    if (this.active && ts - this.lastAutosave >= AUTOSAVE_INTERVAL_MS) {
       this.lastAutosave = ts;
       void saveGame(AUTOSAVE_SLOT, this.state);
     }

@@ -14,6 +14,17 @@ export function formatMoneyFull(n: number): string {
   return `${sign}$${Math.round(Math.abs(n)).toLocaleString('en-US')}`;
 }
 
+export interface CompanyTitle { name: string; emoji: string; next?: number }
+
+/** Prestige tier derived from net worth. */
+export function companyTitle(netWorth: number): CompanyTitle {
+  if (netWorth >= 100_000_000) return { name: 'Global Magnate', emoji: '👑' };
+  if (netWorth >= 50_000_000) return { name: 'Continental', emoji: '🌐', next: 100_000_000 };
+  if (netWorth >= 10_000_000) return { name: 'National', emoji: '🏙️', next: 50_000_000 };
+  if (netWorth >= 1_000_000) return { name: 'Regional', emoji: '🚛', next: 10_000_000 };
+  return { name: 'Startup', emoji: '🌱', next: 1_000_000 };
+}
+
 export function formatNumber(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 10_000) return `${(n / 1000).toFixed(0)}K`;

@@ -3,7 +3,9 @@ import { newGame } from './world';
 import { advanceWorld } from './simulation';
 import { buildRoute, buyVehicle, takeLoan, repayLoan, research } from './actions';
 import { transact, netWorth } from './economy';
+import { creditContracts } from './contracts';
 import { BALANCE } from './balance';
+import type { Contract } from './types';
 
 function run(state: ReturnType<typeof newGame>, gameMinutes: number, step = BALANCE.simStepMinutes) {
   const iters = Math.round(gameMinutes / step);
@@ -94,6 +96,43 @@ describe('determinism', () => {
     const a = build(1);
     const b = build(2);
     expect(JSON.stringify(a)).not.toBe(JSON.stringify(b));
+  });
+});
+
+describe('contracts', () => {
+  it('completes and pays out when its cargo is delivered to the destination', () => {
+    const s = newGame('easy', 99);
+    const contract: Contract = {
+      id: 'ctest', fromCity: 'nyc', toCity: 'chi', cargo: 'goods',
+      amount: 100, reward: 50_000, rp: 20,
+      deadline: s.time + 10_000, createdAt: s.time, progress: 0, status: 'active',
+    };
+    s.contracts.push(contract);
+    const cash0 = s.cash;
+    const rp0 = s.researchPoints;
+
+    creditContracts(s, 'chi', 'goods', 60); // partial
+    expect(contract.status).toBe('active');
+    expect(contract.progress).toBe(60);
+
+    creditContracts(s, 'chi', 'goods', 60); // completes
+    expect(contract.status).toBe('done');
+    expect(s.cash).toBe(cash0 + 50_000);
+    expect(s.researchPoints).toBe(rp0 + 20);
+  });
+
+  it('does not credit the wrong city or cargo', () => {
+    const s = newGame('easy', 7);
+    const contract: Contract = {
+      id: 'ctest2', fromCity: 'nyc', toCity: 'chi', cargo: 'goods',
+      amount: 50, reward: 1000, rp: 1,
+      deadline: s.time + 10_000, createdAt: s.time, progress: 0, status: 'active',
+    };
+    s.contracts.push(contract);
+    creditContracts(s, 'lax', 'goods', 100); // wrong city
+    creditContracts(s, 'chi', 'oil', 100); // wrong cargo
+    expect(contract.progress).toBe(0);
+    expect(contract.status).toBe('active');
   });
 });
 

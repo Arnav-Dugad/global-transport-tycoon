@@ -20,6 +20,9 @@ and needs **no account, no backend, and no API keys**.
   same actions ⇒ identical outcome (fully unit-tested), so saves are perfectly reproducible.
 - **Progression** — a research tech tree, station upgrades, city growth, random events
   (breakdowns, weather, booms, strikes), achievements and reputation.
+- **Contracts & prestige** — timed delivery missions for bonus cash + research, a named
+  company, and prestige titles from Startup up to **Global Magnate**.
+- **~200 real cities**, rotating **2D top-down vehicle sprites**, and synthesized sound effects.
 - **Mobile-first** — bottom-sheet UI, big touch targets, pinch-zoom/tilt, safe-area insets,
   a low-graphics mode for weaker phones, and an installable PWA manifest.
 - **Offline saves** — multiple save slots + autosave in IndexedDB. Your progress never

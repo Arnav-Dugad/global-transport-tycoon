@@ -9,6 +9,7 @@ import { BALANCE } from './balance';
 import { transact } from './economy';
 import { rollDailyEvents, maybeBreakdownOnArrival } from './events';
 import { checkAchievements } from './achievements';
+import { updateContracts, creditContracts } from './contracts';
 import { greatCirclePoint, haversineKm, bearingDeg, type LngLat } from '../utils/geo';
 import type { CityState, GameState, Vehicle } from './types';
 
@@ -168,6 +169,7 @@ function deliverCargo(state: GameState, v: Vehicle, dest: CityState, dist: numbe
     if (def.category === 'freight') {
       state.researchPoints += pay * BALANCE.researchPerDeliveryValue;
     }
+    creditContracts(state, dest.id, cargoId, amount);
   }
 
   if (income > 0) {
@@ -268,8 +270,9 @@ function processDay(state: GameState): void {
   state.reputation += (repTarget - state.reputation) * 0.1;
   state.reputation = Math.max(0, Math.min(100, state.reputation));
 
-  // Random events
+  // Random events + contracts
   rollDailyEvents(state);
+  updateContracts(state);
 
   // Finance snapshot
   const l = state.ledgerToday;

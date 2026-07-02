@@ -4,7 +4,7 @@
 import { create } from 'zustand';
 import type { Mode } from '../data/vehicles';
 
-export type PanelId = 'build' | 'fleet' | 'routes' | 'finance' | 'research' | 'city' | 'menu' | null;
+export type PanelId = 'build' | 'fleet' | 'routes' | 'finance' | 'research' | 'contracts' | 'city' | 'menu' | null;
 export type GraphicsQuality = 'high' | 'low';
 
 interface Settings {

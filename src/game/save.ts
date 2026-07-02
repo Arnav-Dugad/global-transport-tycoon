@@ -66,6 +66,8 @@ function migrate(state: GameState): GameState {
   // Defensive defaults for fields that may be missing in older saves.
   if (state.weatherUntil == null) state.weatherUntil = 0;
   if (state.reputation == null) state.reputation = 50;
+  if (state.contracts == null) state.contracts = [];
+  if (state.companyName == null) state.companyName = 'Ancora Logistics';
   state.version = SAVE_VERSION;
   return state;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUI } from '../../store/uiStore';
 import { useGame } from '../../game/useEngine';
+import { sfx } from '../../game/audio';
 import type { GameEvent } from '../../game/types';
 
 const KIND_STYLE: Record<GameEvent['kind'], string> = {
@@ -24,6 +25,7 @@ export default function Alerts() {
     if (latest && latest.id !== lastId.current) {
       lastId.current = latest.id;
       setBanner(latest);
+      if (latest.kind === 'achievement') sfx.achievement();
       const t = window.setTimeout(() => setBanner((b) => (b?.id === latest.id ? null : b)), 4200);
       return () => window.clearTimeout(t);
     }
